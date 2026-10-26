@@ -1,0 +1,39 @@
+# Secrets
+.env
+kaggle.json
+
+# Data (too big for git, re-download with setup.sh)
+data/raw/
+data/images/
+data/labels/
+*.zip
+
+# Models and training outputs
+runs/
+models/*.pt
+*.pt
+*.onnx
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Airflow
+airflow/logs/
+airflow.db
+airflow-webserver.pid
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
