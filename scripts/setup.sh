@@ -1,75 +1,81 @@
 #!/usr/bin/env bash
-# Install requirements and download the dataset.
-#
-#   bash setup.sh                  # everything
-#   bash setup.sh --no-airflow     # skip Airflow
-#   bash setup.sh --no-data        # install only
-#   bash setup.sh --data-only      # download only
-#   SLUG=owner/name bash setup.sh  # other Kaggle dataset
-set -euo pipefail
+set -Eeuo pipefail
 
-# Load secrets from .env if present (KAGGLE_USERNAME, KAGGLE_KEY, optional SLUG)
-if [ -f .env ]; then set -a; . ./.env; set +a; fi
+# Install project requirements and optionally Apache Airflow.
+# Run from anywhere: bash scripts/setup.sh [--no-airflow]
+# Dataset discovery and downloading are intentionally handled in the notebook.
 
-SLUG="${SLUG:-ahmedsorour1/mri-for-brain-tumor-with-bounding-boxes}"
-RAW_DIR="data/raw"
-AIRFLOW_VERSION="2.10.5"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_DIR"
 
-AIRFLOW=1; INSTALL=1; DATA=1
+# Load project-root .env, if present.
+if [[ -f "$PROJECT_DIR/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$PROJECT_DIR/.env"
+  set +a
+fi
+
+AIRFLOW_VERSION="${AIRFLOW_VERSION:-2.10.5}"
+PYTHON="${PYTHON:-python3}"
+INSTALL_AIRFLOW=1
+
+usage() {
+  cat <<'USAGE'
+Usage: bash scripts/setup.sh [options]
+
+Options:
+  --no-airflow  Skip installing Airflow in its own virtual environment
+  -h, --help    Show this help message
+
+Dataset downloading and Train/Val folder discovery are handled in the notebook.
+USAGE
+}
+
 for arg in "$@"; do
   case "$arg" in
-    --no-airflow) AIRFLOW=0 ;;
-    --no-data)    DATA=0 ;;
-    --data-only)  INSTALL=0 ;;
-    *) echo "Unknown option: $arg"; exit 1 ;;
+    --no-airflow) INSTALL_AIRFLOW=0 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $arg" >&2; usage >&2; exit 2 ;;
   esac
 done
 
+log() { printf '\n== %s ==\n' "$*"; }
+die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
 install_requirements() {
-  echo "== System packages =="
-  apt-get update -y && apt-get install -y libgl1 libglib2.0-0 git unzip tmux
+  log "Install project requirements"
+  [[ -f "$PROJECT_DIR/requirements.txt" ]] || die "requirements.txt was not found at $PROJECT_DIR/requirements.txt"
+  "$PYTHON" -m pip install --upgrade pip
+  "$PYTHON" -m pip install -r "$PROJECT_DIR/requirements.txt"
+  "$PYTHON" -m pip check || echo "WARNING: pip check reported dependency conflicts. Review the output above." >&2
 
-  echo "== Python packages =="
-  python -m pip install --upgrade pip
-  cd ..
-  pip install -r requirements.txt
-
-  if [ "$AIRFLOW" -eq 1 ]; then
-    echo "== Airflow =="
-    py=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
-    pip install -r requirements-airflow.txt \
-      -c "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${py}.txt" \
-      || echo "WARNING: Airflow install failed"
-  fi
-
-  python -c "import torch; print('CUDA:', torch.cuda.is_available())"
-  pip freeze > requirements.lock.txt
+  log "Check TensorFlow GPU availability (if TensorFlow is installed)"
+  "$PYTHON" - <<'PY'
+try:
+    import tensorflow as tf
+    print("TensorFlow:", tf.__version__)
+    print("GPU devices:", tf.config.list_physical_devices("GPU"))
+except ImportError:
+    print("TensorFlow is not installed in this Python environment; skipping GPU check.")
+PY
 }
 
-download_data() {
-  if [ ! -f "$HOME/.kaggle/kaggle.json" ] && [ ! -f "$HOME/.kaggle/access_token" ] \
-     && [ -z "${KAGGLE_KEY:-}" ] && [ -z "${KAGGLE_API_TOKEN:-}" ]; then
-    echo "ERROR: no Kaggle credentials. Set KAGGLE_API_TOKEN (new token) or"
-    echo "       KAGGLE_USERNAME + KAGGLE_KEY (kaggle.json), in .env"
-    exit 1
-  fi
-  [ -f "$HOME/.kaggle/kaggle.json" ] && chmod 600 "$HOME/.kaggle/kaggle.json"
-
-  if [ -n "$(ls -A "$RAW_DIR" 2>/dev/null)" ]; then
-    echo "== $RAW_DIR already filled, skipping download =="
-  else
-    echo "== Downloading $SLUG =="
-    mkdir -p "$RAW_DIR"
-    kaggle datasets download -d "$SLUG" -p "$RAW_DIR" --unzip
-  fi
-
-  echo "== Summary =="
-  find "$RAW_DIR" -maxdepth 3 -type d | head -20
-  find "$RAW_DIR" -type f | sed -n 's/.*\.\([^./]*\)$/\1/p' | tr 'A-Z' 'a-z' | sort | uniq -c
-  sample=$(find "$RAW_DIR" -name '*.txt' | head -1)
-  [ -n "$sample" ] && { echo "$sample"; head -3 "$sample"; }
+install_airflow() {
+  log "Install Apache Airflow $AIRFLOW_VERSION in an isolated environment"
+  local airflow_venv="$PROJECT_DIR/.venv-airflow"
+  "$PYTHON" -m venv "$airflow_venv"
+  local airflow_python="$airflow_venv/bin/python"
+  "$airflow_python" -m pip install --upgrade pip
+  "$airflow_python" -m pip install "apache-airflow==${AIRFLOW_VERSION}" \
+    --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-$("$airflow_python" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")').txt"
+  echo "Airflow installed separately in: $airflow_venv"
 }
 
-[ "$INSTALL" -eq 1 ] && install_requirements
-[ "$DATA" -eq 1 ] && download_data
-echo "== Done =="
+install_requirements
+if [[ "$INSTALL_AIRFLOW" == "1" ]]; then
+  install_airflow
+fi
+
+log "Setup complete"

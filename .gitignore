@@ -1,8 +1,11 @@
 # Secrets
 .env
+.env.*
+!.env.example
 kaggle.json
+.kaggle/
 
-# Data (too big for git, re-download with setup.sh)
+# Data (too big for git, re-download with setup.sh / notebooks)
 data/raw/
 data/images/
 data/labels/
@@ -12,28 +15,57 @@ data/labels/
 runs/
 models/*.pt
 *.pt
+*.pth
 *.onnx
+*.engine
+*.tflite
+*.h5
+*.keras
+*.ckpt
+*.safetensors
 mlruns/
 mlartifacts/
 mlflow.db
+wandb/
 
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
 .venv/
+.venv-*/
 venv/
+env/
 *.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Notebooks
 .ipynb_checkpoints/
+*.nbconvert.ipynb
 
-# Airflow
+# Airflow (installed in .venv-airflow by scripts/setup.sh)
 airflow/logs/
+logs/
 airflow.db
+airflow.cfg
 airflow-webserver.pid
+airflow-scheduler.pid
+standalone_admin_password.txt
+unittests.cfg
+webserver_config.py
 
-# OS / editor
+# OS / editor / sync tools
 .DS_Store
 Thumbs.db
+desktop.ini
 .vscode/
 .idea/
+*.swp
+.stignore

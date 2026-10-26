@@ -30,3 +30,6 @@ streamlit>=1.30
 # Notebook
 jupyter>=1.0
 ipykernel>=6.25
+
+# kaggle for data
+kagglehub
