@@ -20,6 +20,9 @@ def find_dir(root : Path, name : str):
 
 @dataclass(frozen=True)
 class CFG:
+
+    def __post_init__(self):
+        SeedEverything.seed_everything(self.SEED)
     SEED: int = 42
 
     PROJECT_ROOT: Path = PROJECT_ROOT
@@ -45,17 +48,17 @@ class CFG:
     def to_dict(self) -> dict:
         return {k: str(v) if isinstance(v, Path) else v for k, v in asdict(self).items()}
 
-def seed_everything(seed: int = CFG.SEED) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
+class SeedEverything():
+    def seed_everything(seed: int = CFG.SEED) -> None:
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        os.environ["PYTHONHASHSEED"] = str(seed)
 
 cfg = CFG()
 
 if __name__ == "__main__":
-    seed_everything()
     print("Device:", cfg.DEVICE)
     print("Raw data exists:", cfg.RAW_DIR.exists())
     for k, v in cfg.to_dict().items():
