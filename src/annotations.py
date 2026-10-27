@@ -12,7 +12,7 @@ def read_yolo_label(label_path):
         if not parts:
             continue
         cls, xc, yc, w, h = parts[:5]
-        boxes.appends((int(cls), float(xc), float(yc), float(w), float(h)))
+        boxes.append((int(cls), float(xc), float(yc), float(w), float(h)))
     return boxes
 
 def yolo_to_xyxy(xc, yc, w, h, img_w, img_h):

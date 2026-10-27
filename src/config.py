@@ -31,6 +31,10 @@ class CFG:
     DATA_YAML: Path = DATA_DIR / "data.yaml"
     MODELS_DIR: Path = PROJECT_ROOT / "models"
     RUNS_DIR: Path = PROJECT_ROOT / "runs"
+    
+    VAL_RATIO: float = 0.15
+    TEST_RATIO: float = 0.15
+    RAW_SPLIT_DIR: Path = DATA_DIR / "raw_split"
 
     CLASS_NAMES: tuple = ("Glioma", "Meningioma", "No Tumor", "Pituitary")
     NUM_CLASSES = len(CLASS_NAMES)
