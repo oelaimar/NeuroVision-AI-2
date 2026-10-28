@@ -1,5 +1,7 @@
 from pathlib import Path
 import cv2
+import matplotlib.pyplot as plt
+
 from src.config import cfg
 
 CLASS_NAMES = list(cfg.CLASS_NAMES)
@@ -67,6 +69,41 @@ def validate_label(label_path, num_classes=len(CLASS_NAMES)):
         if any(not 0.0 <= v <= 1.0 for v in coords):
             errors.append(f"line {i}: coordinates must be between 0 and 1")
     return errors
+
+def show_annotation(image_path, label_path, class_names=cfg.CLASS_NAMES):
+    """ One annotation, normalized then in pixels """
+
+    print("label:", label_path)
+    print("image:", image_path)
+
+    # Read the annotation (normalized values)
+    print("\nraw text:\n", label_path.read_text())
+    boxes = read_yolo_label(label_path)
+    print("parsed  :", boxes)
+    print("errors  :", validate_label(label_path) or "none")
+
+    # Convert to pixels
+    image = cv2.imread(str(image_path))
+    img_h, img_w = image.shape[:2]
+    print(f"\nimage size: {img_w}x{img_h}")
+
+    for cls, xc, yc, w, h in boxes:
+        x1, y1, x2, y2 = yolo_to_xyxy(xc, yc, w, h, img_w, img_h)
+        print(f"class {cls} ({class_names[cls]})")
+        print(f"  YOLO   : xc={xc:.4f} yc={yc:.4f} w={w:.4f} h={h:.4f}")
+        print(f"  pixels : x1={x1} y1={y1} x2={x2} y2={y2}  ({x2 - x1}x{y2 - y1} px)")
+
+        # Check: converting back gives the original values (small rounding error)
+        back = xyxy_to_yolo(x1, y1, x2, y2, img_w, img_h)
+        assert all(abs(a - b) < 0.01 for a, b in zip(back, (xc, yc, w, h))), "round trip failed"
+
+    # Draw the boxes
+    preview = draw_boxes(image, boxes, class_names)
+    plt.figure(figsize=(6, 6))
+    plt.imshow(cv2.cvtColor(preview, cv2.COLOR_BGR2RGB))
+    plt.axis("off")
+    plt.title(image_path.name)
+    plt.show()
 
 if __name__ == "__main__":
     # Demo: python src/annotations.py path/to/image.jpg path/to/label.txt
