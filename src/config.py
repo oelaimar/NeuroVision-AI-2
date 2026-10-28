@@ -11,6 +11,23 @@ PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).resolve().parent.pa
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 DATA_DIR = PROJECT_ROOT / "data"
 
+AUGMENTATION = {
+    # kept
+    "degrees": 10.0,      # light rotation (+/- 10 degrees)
+    "translate": 0.1,     # shift up to 10% of the image
+    "scale": 0.3,         # zoom in/out by up to 30%
+    "hsv_v": 0.2,         # brightness variation
+    # disabled
+    "fliplr": 0.0,        # no horizontal flip: tumor side (left/right brain) matters
+    "flipud": 0.0,        # no vertical flip: MRI slices have a standard orientation
+    "hsv_h": 0.0,         # no hue change: MRI images are grayscale
+    "hsv_s": 0.0,         # no saturation change: grayscale
+    "mosaic": 0.0,        # see decision below
+    "mixup": 0.0,
+    "shear": 0.0,
+    "perspective": 0.0,
+}
+
 def find_dir(root : Path, name : str):
     """ Find a folder called `name` anywhere under the root """
     for p in root.rglob("*"):
