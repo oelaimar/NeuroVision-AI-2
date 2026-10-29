@@ -1,0 +1,10 @@
+path: /home/user/NeuroVision-AI-2/data
+train: images/train
+val: images/valid
+test: images/test
+nc: 4
+names:
+  0: Glioma
+  1: Meningioma
+  2: No Tumor
+  3: Pituitary

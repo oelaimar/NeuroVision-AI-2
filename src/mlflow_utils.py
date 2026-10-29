@@ -7,7 +7,7 @@ import pandas as pd
 from mlflow import MlflowClient
 from mlflow.exceptions import MlflowException
 
-DEFAULT_URI = "http://127.0.0.1:5000"
+DEFAULT_URI = "http://localhost:5000"
 START_CMD = ("mlflow server --host 0.0.0.0 --port 5000 "
              "--backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlartifacts")
 

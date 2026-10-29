@@ -78,9 +78,3 @@ class SeedEverything():
         os.environ["PYTHONHASHSEED"] = str(seed)
 
 cfg = CFG()
-
-if __name__ == "__main__":
-    print("Device:", cfg.DEVICE)
-    print("Raw data exists:", cfg.RAW_DIR.exists())
-    for k, v in cfg.to_dict().items():
-        print(f"{k}: {v}")

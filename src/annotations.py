@@ -104,14 +104,3 @@ def show_annotation(image_path, label_path, class_names=cfg.CLASS_NAMES):
     plt.axis("off")
     plt.title(image_path.name)
     plt.show()
-
-if __name__ == "__main__":
-    # Demo: python src/annotations.py path/to/image.jpg path/to/label.txt
-    import sys
-    img_path, lbl_path = sys.argv[1:3]
-    image = cv2.imread(img_path)
-    boxes = read_yolo_label(lbl_path)
-    print("boxes:", boxes)
-    print("errors:", validate_label(lbl_path) or "none")
-    cv2.imwrite("preview.jpg", draw_boxes(image, boxes))
-    print("saved preview.jpg")
