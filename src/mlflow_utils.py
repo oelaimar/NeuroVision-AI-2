@@ -8,8 +8,15 @@ from mlflow import MlflowClient
 from mlflow.exceptions import MlflowException
 
 DEFAULT_URI = "http://localhost:5000"
-START_CMD = ("mlflow server --host 0.0.0.0 --port 5000 "
-             "--backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlartifacts")
+
+START_CMD = (
+    "mlflow server "
+    "--host 0.0.0.0 "
+    "--port 5000 "
+    "--allowed-hosts 'localhost:*,127.0.0.1:*,Tunnel domain' "
+    "--cors-allowed-origins 'Tunnel url'"
+)
+
 
 def start_tracking(experiment: str = "neurovision-yolov8", tracking_uri=None, timeout: int = 3) -> None:
     """Connect to the MLflow server and select the experiment (created if missing)."""
@@ -22,7 +29,6 @@ def start_tracking(experiment: str = "neurovision-yolov8", tracking_uri=None, ti
             raise ConnectionError(
                 f"MLflow server not reachable at {uri}. Start it in a terminal:\n  {START_CMD}"
             ) from e
-
     mlflow.set_tracking_uri(uri)
     exp = mlflow.set_experiment(experiment)
     print(f"MLflow tracking: {uri} | experiment: {experiment} (id {exp.experiment_id})")
@@ -41,7 +47,7 @@ def compare_runs(experiment:str = "neurovision-yolov8") -> pd.DataFrame:
     params = [c for c in raw.columns if c.startswith("params.")]
     varying = [c for c in params if raw[c].nunique(dropna=False) > 1]
 
-    out = pf.DataFrame({"run_id": raw["run_id"],  "run_name": raw["tags.mlflow.runName"]})
+    out = pd.DataFrame({"run_id": raw["run_id"],  "run_name": raw["tags.mlflow.runName"]})
     for col in varying:
         out[col.removeprefix("params.")] = raw[col]
     for metric in ("precision", "recall", "map50", "map50_95", "best_epoch"):

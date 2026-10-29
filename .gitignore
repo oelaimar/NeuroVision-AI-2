@@ -9,6 +9,7 @@ kaggle.json
 data/raw/
 data/images/
 data/labels/
+data/raw_split/
 *.zip
 
 # Models and training outputs
