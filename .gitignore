@@ -28,6 +28,8 @@ mlruns/
 mlartifacts/
 mlflow.db
 wandb/
+mlflow/
+models/
 
 # Python
 __pycache__/
@@ -70,3 +72,4 @@ desktop.ini
 .idea/
 *.swp
 .stignore
+.stfolder/
